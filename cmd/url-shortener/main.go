@@ -2,14 +2,24 @@ package main
 
 import (
 	"RESTFullGolang/internal/config"
+	"RESTFullGolang/internal/lib/logger/sl"
 	"RESTFullGolang/internal/logger"
+	"RESTFullGolang/internal/storage/sqlite"
 	"log/slog"
+	"os"
 )
 
 // config, logger, storage, router, server
 func main() {
 	cfg := config.MustLoad()
+
 	log := logger.SetupLogger(cfg.Env)
 	log.Info("start", slog.String("environment", cfg.Env))
 	log.Debug("debugging")
+
+	storage, err := sqlite.New(cfg.StoragePath)
+	if err != nil {
+		log.Error("error creating storage", sl.Err(err))
+		os.Exit(1)
+	}
 }
