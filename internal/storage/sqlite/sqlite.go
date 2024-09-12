@@ -46,12 +46,12 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 	const op = "storage.sqlite.SaveURL"
 
-	stmrt, err := s.db.Prepare("INSERT INTO url(url, alias) VALUES(?, ?)")
+	stmt, err := s.db.Prepare("INSERT INTO url(url, alias) VALUES(?, ?)")
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	res, err := stmrt.Exec(urlToSave, alias)
+	res, err := stmt.Exec(urlToSave, alias)
 	if err != nil {
 
 		if sqliteErr, ok := err.(sqlite3.Error); ok && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
@@ -66,4 +66,47 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Storage) GetURL(alias string) (string, error) {
+
+	var res string
+	const op = "storage.sqlite.GetURL"
+
+	stmt, err := s.db.Prepare("SELECT url FROM url WHERE alias = ?")
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = stmt.QueryRow(alias).Scan(&res)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", storage.ErrURLNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return res, nil
+
+}
+
+func (s *Storage) DeleteURL(alias string) error {
+
+	const op = "storage.sqlite.DeleteURL"
+
+	stmt, err := s.db.Prepare("DELETE FROM url WHERE alias =?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = stmt.Exec(alias)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) Close() error {
+	return s.db.Close()
 }

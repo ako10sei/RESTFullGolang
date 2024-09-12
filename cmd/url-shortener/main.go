@@ -22,4 +22,10 @@ func main() {
 		log.Error("error creating storage", sl.Err(err))
 		os.Exit(1)
 	}
+	defer func(storage *sqlite.Storage) {
+		err = storage.Close()
+		if err != nil {
+			log.Error("error closing storage", sl.Err(err))
+		}
+	}(storage)
 }
