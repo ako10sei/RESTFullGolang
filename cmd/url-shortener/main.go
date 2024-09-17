@@ -2,11 +2,13 @@ package main
 
 import (
 	"RESTFullGolang/internal/config"
+	"RESTFullGolang/internal/http-server/handlers/url/save"
 	"RESTFullGolang/internal/http-server/middleware"
 	"RESTFullGolang/internal/lib/logger/sl"
 	"RESTFullGolang/internal/logger"
 	"RESTFullGolang/internal/storage/sqlite"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
@@ -34,5 +36,22 @@ func main() {
 
 	router := chi.NewRouter()
 	middleware.AppendMiddleware(router, log)
+
+	router.Post("/url", save.New(log, storage))
+
+	log.Info("start server", slog.String("address", cfg.Address))
+
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("failed to start server")
+	}
+	log.Error("server stopped")
 
 }
