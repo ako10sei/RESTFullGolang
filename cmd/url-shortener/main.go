@@ -2,6 +2,8 @@ package main
 
 import (
 	"RESTFullGolang/internal/config"
+	"RESTFullGolang/internal/http-server/handlers/redirect"
+	"RESTFullGolang/internal/http-server/handlers/remove"
 	"RESTFullGolang/internal/http-server/handlers/url/save"
 	"RESTFullGolang/internal/http-server/middleware"
 	"RESTFullGolang/internal/lib/logger/sl"
@@ -38,6 +40,8 @@ func main() {
 	middleware.AppendMiddleware(router, log)
 
 	router.Post("/url", save.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storage))
+	router.Delete("/{alias}", remove.New(log, storage))
 
 	log.Info("start server", slog.String("address", cfg.Address))
 
